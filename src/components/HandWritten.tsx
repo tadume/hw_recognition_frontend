@@ -5,14 +5,46 @@ import React, { FC, memo, useRef, useState } from 'react';
 import { jsx, css } from '@emotion/react';
 import { Button, Flex, Heading } from '@chakra-ui/react';
 import axios from 'axios';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartOptions,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
 const HandWritten: FC = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [predictedLabel, setPredictedLabel] = useState<String>('');
+  const [predictionProb, setPredictionProb] = useState<Array<number>>([]);
+
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+  );
 
   const canvasSize = {
     width: 28,
     height: 28,
+  };
+
+  const data = {
+    labels: Array.from({ length: 10 }, (_, index) => index.toString()),
+    datasets: [
+      {
+        label: 'prediction',
+        data: predictionProb,
+      },
+    ],
   };
 
   const startDrawing = (x: number, y: number) => {
@@ -45,12 +77,14 @@ const HandWritten: FC = memo(() => {
       .post('http://localhost:8000/api/predict', {
         image: base64String,
       })
+      .then((res) => {
+        setPredictedLabel(res.data.predicted_label);
+        setPredictionProb(res.data.prediction_prob);
+      })
       .catch((e) => {
         console.log(e);
         alert('an error occured while predicting');
       });
-
-    console.log(res);
   };
 
   return (
@@ -61,6 +95,7 @@ const HandWritten: FC = memo(() => {
       <canvas
         css={css`
           border: 1px solid black;
+          margin: 10px 0;
         `}
         width={canvasSize.width}
         height={canvasSize.height}
@@ -87,6 +122,16 @@ const HandWritten: FC = memo(() => {
           predict
         </Button>
       </Flex>
+      <Heading as="h2" fontSize="lg" mt={5}>
+        {predictedLabel && `predicted : ${predictedLabel}`}
+      </Heading>
+      <div
+        css={css`
+          width: 50%;
+        `}
+      >
+        <Bar data={data} />
+      </div>
     </Flex>
   );
 });
