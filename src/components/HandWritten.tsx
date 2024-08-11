@@ -71,6 +71,12 @@ const HandWritten: FC = memo(() => {
     ctx?.clearRect(0, 0, canvasSize.width, canvasSize.height);
   };
 
+  const handleReset = () => {
+    clearDrawing();
+    setPredictedLabel('');
+    setPredictionProb([]);
+  };
+
   const predict = async () => {
     const base64String = canvasRef.current?.toDataURL('image/png');
     const res = await axios
@@ -114,7 +120,7 @@ const HandWritten: FC = memo(() => {
           mr={5}
           colorScheme="teal"
           variant="outline"
-          onClick={clearDrawing}
+          onClick={handleReset}
         >
           reset
         </Button>
@@ -125,13 +131,15 @@ const HandWritten: FC = memo(() => {
       <Heading as="h2" fontSize="lg" mt={5}>
         {predictedLabel && `predicted : ${predictedLabel}`}
       </Heading>
-      <div
-        css={css`
-          width: 50%;
-        `}
-      >
-        <Bar data={data} />
-      </div>
+      {predictionProb.length !== 0 && (
+        <div
+          css={css`
+            width: 50%;
+          `}
+        >
+          <Bar data={data} />
+        </div>
+      )}
     </Flex>
   );
 });
